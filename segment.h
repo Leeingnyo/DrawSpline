@@ -2,46 +2,66 @@
 
 #include "mymath.h"
 
+template <typename T>
 class Segment {
     protected:
         static int t;
     public:
-        virtual std::vector<glm::vec3> GeneratePoints()=0;
+        virtual std::vector<T> GeneratePoints()=0;
 };
 
-class CubicBezierSegment : public Segment {
+template <typename T>
+class CubicBezierSegment : public Segment<T> {
     private:
-        glm::vec3 p[4];
+        T p[4];
     public:
         static float basis(int l, float t){
             return mymath::Combinations(3, l) * std::pow(1 - t, 3 - l) * std::pow(t, l);
         }
         
-        CubicBezierSegment(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3){
+        CubicBezierSegment(T p0, T p1, T p2, T p3){
             p[0] = p0;
             p[1] = p1;
             p[2] = p2;
             p[3] = p3;
         }
-        virtual std::vector<glm::vec3> GeneratePoints();
+        virtual std::vector<T> GeneratePoints(){
+            std::vector<T> draw_points;
+            for (int i = 0; i <= Segment<T>::t; i++){
+                T point;
+                for (int pi = 0; pi < 4; pi++){
+                    point += p[pi] * basis(pi, ((float)i / (float)Segment<T>::t));
+                }
+                draw_points.push_back(point);
+            }
+            return draw_points;
+        }
 };
 
-class CatmullRomSegment : public Segment {
+template <typename T>
+class CatmullRomSegment : public Segment<T> {
     private:
-        glm::vec3 p[4];
+        T p[4];
     public:
-        CatmullRomSegment(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3){
+        CatmullRomSegment(T p0, T p1, T p2, T p3){
             p[0] = p0;
             p[1] = p1;
             p[2] = p2;
             p[3] = p3;
         }
-        virtual std::vector<glm::vec3> GeneratePoints();
+        virtual std::vector<T> GeneratePoints(){
+            T control1 = (p[2] - p[0]) * (1.0f / 3.0f) + p[1];
+            T control2 = (p[1] - p[3]) * (1.0f / 3.0f) + p[2];
+            CubicBezierSegment<T> s = CubicBezierSegment<T>(p[1], control1, control2, p[2]);
+            std::vector<T> points = s.GeneratePoints();
+            return points;
+        };
 };
 
-class BSplineSegment : public Segment {
+template <typename T>
+class BSplineSegment : public Segment<T> {
     private:
-        glm::vec3 p[4];
+        T p[4];
     public:
         static float basis(int l, float t){
             switch (l){
@@ -57,11 +77,24 @@ class BSplineSegment : public Segment {
                     return 0;
             }
         }
-        BSplineSegment(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3){
+        BSplineSegment(T p0, T p1, T p2, T p3){
             p[0] = p0;
             p[1] = p1;
             p[2] = p2;
             p[3] = p3;
         }
-        virtual std::vector<glm::vec3> GeneratePoints();
+        virtual std::vector<T> GeneratePoints(){
+            std::vector<T> draw_points;
+            for (int i = 0; i <= Segment<T>::t; i++){
+                T point;
+                for (int pi = 0; pi < 4; pi++){
+                    point += p[pi] * basis(pi, ((float)i / (float)Segment<T>::t));
+                }
+                draw_points.push_back(point);
+            }
+            return draw_points;
+        }
 };
+
+template <typename T>
+int Segment<T>::t = 20;

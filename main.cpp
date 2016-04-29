@@ -12,6 +12,7 @@
 
 #define ZZZZ float(1)
 #define Clamp(val, min, max) ((val) > (max) ? (max) : ((val) < (min) ? (min) : (val)))
+#define SetColor() glColor3f(1, 1, 1)
 
 int width, height; 
 
@@ -26,6 +27,8 @@ double prev_z = 0;
 float fov = 45.f;
 bool is_shift = false;
 bool is_mouse_left_clicked = false;
+
+void Draw(std::vector<glm::vec3> &&points);
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -174,7 +177,7 @@ int main(void)
     */
     
     /* Init Data */
-    Spline spline(Spline::Kind::BSpline, true);
+    Spline<glm::vec3> spline(Spline<glm::vec3>::Kind::BSpline, true);
     std::cout << (int)spline.GetKind() << std::endl;
     std::cout << spline.IsDrawable() << std::endl;
     spline.PopPoint();
@@ -184,9 +187,9 @@ int main(void)
     spline.AddPoint(glm::vec3(1, -1, 0));
     std::cout << spline.IsDrawable() << std::endl;
     
-    std::cout << CubicBezierSegment::basis(0, 0) << std::endl;
+    std::cout << CubicBezierSegment<int>::basis(0, 0) << std::endl;
     
-    BSplineSegment s(glm::vec3(1, 1, 0),glm::vec3(-1, 1, 0),glm::vec3(-1, -1, 0),glm::vec3(1, -1, 0));
+    BSplineSegment<glm::vec3> s(glm::vec3(1, 1, 0),glm::vec3(-1, 1, 0),glm::vec3(-1, -1, 0),glm::vec3(1, -1, 0));
     std::vector<glm::vec3> &&points = spline.GeneratePoints();
     
     for (glm::vec3 point : points){
@@ -246,7 +249,7 @@ int main(void)
                 glLineWidth(1);
             }
             
-            spline.Draw();
+            Draw(spline.GeneratePoints());
             
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
@@ -258,5 +261,14 @@ int main(void)
 
     glfwTerminate();
     return 0;
+}
+
+void Draw(std::vector<glm::vec3> &&points){
+    SetColor();
+    glBegin(GL_LINE_STRIP);
+    for (glm::vec3 point : points){
+        glVertex3f(point.x, point.y, point.z);
+    }
+    glEnd();
 }
 
