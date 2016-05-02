@@ -10,13 +10,16 @@
 #include "segment.h"
 #include "spline.h"
 
+#include "section.h"
+#include "parser.h"
+
 #define ZZZZ float(1)
 #define Clamp(val, min, max) ((val) > (max) ? (max) : ((val) < (min) ? (min) : (val)))
 #define SetColor() glColor3f(1, 1, 1)
 
 int width, height; 
 
-glm::vec3 eye(0, 0, 10);
+glm::vec3 eye(0, 0, 100);
 glm::vec3 ori(0, 0, 0);
 glm::vec3 up(0, 1, 0);
 
@@ -137,7 +140,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         is_mouse_left_clicked = false;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     GLFWwindow* window;
 
@@ -177,24 +180,22 @@ int main(void)
     */
     
     /* Init Data */
-    Spline<glm::vec3> spline(Spline<glm::vec3>::Kind::BSpline, true);
-    std::cout << (int)spline.GetKind() << std::endl;
-    std::cout << spline.IsDrawable() << std::endl;
-    spline.PopPoint();
-    spline.AddPoint(glm::vec3(1, 1, 0));
-    spline.AddPoint(glm::vec3(-1, 1, 0));
-    spline.AddPoint(glm::vec3(-1, -1, 0));
-    spline.AddPoint(glm::vec3(1, -1, 0));
-    std::cout << spline.IsDrawable() << std::endl;
+    Spline<int> spline(Spline<int>::Kind::BSpline, false);
+    spline.AddPoint(0);
+    spline.AddPoint(5);
+    spline.AddPoint(15);
+    spline.AddPoint(0);
     
-    std::cout << CubicBezierSegment<int>::basis(0, 0) << std::endl;
+    std::vector<int> &&points = spline.GeneratePoints();
     
-    BSplineSegment<glm::vec3> s(glm::vec3(1, 1, 0),glm::vec3(-1, 1, 0),glm::vec3(-1, -1, 0),glm::vec3(1, -1, 0));
-    std::vector<glm::vec3> &&points = spline.GeneratePoints();
-    
-    for (glm::vec3 point : points){
-        //std::cout << point.x << " " << point.y << " " << point.z << std::endl;
+    for (int point : points){
+        // std::cout << point << std::endl;
     }
+    
+    Parser parser;
+    SurfaceBuilder &&builder = parser.Parse(argv[1]);
+    // builder.Print();
+    Surface surface = builder.Build();
     
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -209,7 +210,7 @@ int main(void)
         {
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
-    	    gluPerspective(fov, ratio, 0.1, 50.0f);
+    	    gluPerspective(fov, ratio, 0.1, 200.0f);
         }
         
         /* Render */
@@ -249,7 +250,7 @@ int main(void)
                 glLineWidth(1);
             }
             
-            Draw(spline.GeneratePoints());
+            surface.Draw();
             
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
@@ -263,7 +264,7 @@ int main(void)
     return 0;
 }
 
-void Draw(std::vector<glm::vec3> &&points){
+void DrawSpline(std::vector<glm::vec3> &&points){
     SetColor();
     glBegin(GL_LINE_STRIP);
     for (glm::vec3 point : points){
@@ -272,3 +273,19 @@ void Draw(std::vector<glm::vec3> &&points){
     glEnd();
 }
 
+bool debug = true;
+
+void Surface::Draw(){
+    for (Section section : sections){
+        Spline<glm::vec3> rmflf_rjt(spline_type == SurfaceType::CatmullRom ? Spline<glm::vec3>::Kind::CatmullRom : Spline<glm::vec3>::Kind::BSpline, true);
+        for (glm::vec3 point : section.control_points){
+            // 쿼터니온을 곱한다 
+            // 스케일링부터 해도 된다 
+            glm::vec3 p = point * section.scaling_factor;
+            // p = q * p;
+            p = p + section.position;
+            rmflf_rjt.AddPoint(p);
+        }
+        DrawSpline(rmflf_rjt.GeneratePoints());
+    }
+}

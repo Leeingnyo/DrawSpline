@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include "mymath.h"
 
 template <typename T>
@@ -28,7 +29,7 @@ class CubicBezierSegment : public Segment<T> {
         virtual std::vector<T> GeneratePoints(){
             std::vector<T> draw_points;
             for (int i = 0; i <= Segment<T>::t; i++){
-                T point;
+                T point{};
                 for (int pi = 0; pi < 4; pi++){
                     point += p[pi] * basis(pi, ((float)i / (float)Segment<T>::t));
                 }
@@ -86,7 +87,7 @@ class BSplineSegment : public Segment<T> {
         virtual std::vector<T> GeneratePoints(){
             std::vector<T> draw_points;
             for (int i = 0; i <= Segment<T>::t; i++){
-                T point;
+                T point{};
                 for (int pi = 0; pi < 4; pi++){
                     point += p[pi] * basis(pi, ((float)i / (float)Segment<T>::t));
                 }
@@ -97,4 +98,6 @@ class BSplineSegment : public Segment<T> {
 };
 
 template <typename T>
-int Segment<T>::t = 20;
+int Segment<T>::t = 15;
+
+
