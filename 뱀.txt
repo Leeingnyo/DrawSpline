@@ -1,4 +1,4 @@
-﻿# Kobra
+# Kobra
 BSPLINE
 21 # Cross Section Number
 12 #ControlPointerNumber

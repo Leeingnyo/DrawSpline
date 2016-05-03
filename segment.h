@@ -50,8 +50,8 @@ class CatmullRomSegment : public Segment<T> {
             p[3] = p3;
         }
         virtual std::vector<T> GeneratePoints(){
-            T control1 = (p[2] - p[0]) * (1.0f / 3.0f) + p[1];
-            T control2 = (p[1] - p[3]) * (1.0f / 3.0f) + p[2];
+            T control1 = (p[2] - p[0]) * (1.0f / 6.0f) + p[1];
+            T control2 = (p[1] - p[3]) * (1.0f / 6.0f) + p[2];
             CubicBezierSegment<T> s = CubicBezierSegment<T>(p[1], control1, control2, p[2]);
             std::vector<T> points = s.GeneratePoints();
             return points;
@@ -97,5 +97,5 @@ class BSplineSegment : public Segment<T> {
 };
 
 template <typename T>
-int Segment<T>::t = 15;
+int Segment<T>::t = 10;
 

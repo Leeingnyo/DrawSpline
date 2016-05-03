@@ -185,18 +185,6 @@ int main(int argc, char *argv[])
     glEnable(GL_COLOR_MATERIAL);
     
     /* Init Data */
-    Spline<float> spline(Spline<float>::Kind::CatmullRom, false);
-    spline.AddPoint(0);
-    spline.AddPoint(5);
-    spline.AddPoint(15);
-    spline.AddPoint(0);
-    
-    std::vector<float> &&points = spline.GeneratePoints();
-    
-    for (float point : points){
-        // std::cout << point << std::endl;
-    }
-    
     Parser parser;
     SurfaceBuilder &&builder = parser.Parse(argv[1]);
     // builder.Print();
@@ -255,6 +243,8 @@ int main(int argc, char *argv[])
                 glLineWidth(1);
             }
             
+            glShadeModel(GL_SMOOTH);
+            
             surface.Draw();
             
             /* Swap front and back buffers */
@@ -290,6 +280,9 @@ void DrawSurface(std::vector<glm::vec3> &&former, std::vector<glm::vec3> &&latte
     int size = former.size();
     glBegin(GL_TRIANGLES);
     for (int i = 0; i < size; i++){
+        glm::vec3 normal;
+        normal = glm::normalize(glm::cross(former[(i) % size] - latter[(i) % size], former[(i + 1) % size] - latter[(i) % size]));
+        glNormal3f(normal.x, normal.y, normal.z);
         glVertex3f(former[(i) % size].x, former[(i) % size].y, former[(i) % size].z);
         glVertex3f(latter[(i) % size].x, latter[(i) % size].y, latter[(i) % size].z);
         glVertex3f(former[(i + 1) % size].x, former[(i + 1) % size].y, former[(i + 1) % size].z);
