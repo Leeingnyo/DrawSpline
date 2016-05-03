@@ -60,5 +60,6 @@ class Spline{
                 
                 delete segment;
             }
+            return points;
         }
 };

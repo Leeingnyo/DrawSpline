@@ -7,6 +7,8 @@
 
 #include "segment.h"
 #include "spline.h"
+#include "quaternion_spline.h"
+
 #include "section.h"
 
 void SurfaceBuilder::Print(){
@@ -61,7 +63,12 @@ Surface SurfaceBuilder::Build(){
         scaling_factor_spline.AddPoint(section3.scaling_factor);
         std::vector<float> &&scaling_factor_points = scaling_factor_spline.GeneratePoints();
         // Scaling Factor
-        
+        QuaternionSpline quaternion_spline(false);
+        quaternion_spline.AddPoint(section0.rotation);
+        quaternion_spline.AddPoint(section1.rotation);
+        quaternion_spline.AddPoint(section2.rotation);
+        quaternion_spline.AddPoint(section3.rotation);
+        std::vector<glm::quat> &&quaternions = quaternion_spline.GeneratePoints();
         // Quaternion
         std::vector<glm::vec3> control_point_splines[control_point_num];
         for (int i = 0; i < control_point_num; i++){
@@ -79,7 +86,7 @@ Surface SurfaceBuilder::Build(){
             Section section;
             section.position = position_points[i];
             section.scaling_factor = scaling_factor_points[i];
-            section.rotation = glm::quat();
+            section.rotation = quaternions[i];
             for (int j = 0; j < control_point_num; j++){
                 section.AddPoint(control_point_splines[j][i]);
             }

@@ -19,7 +19,6 @@ class CubicBezierSegment : public Segment<T> {
         static float basis(int l, float t){
             return mymath::Combinations(3, l) * std::pow(1 - t, 3 - l) * std::pow(t, l);
         }
-        
         CubicBezierSegment(T p0, T p1, T p2, T p3){
             p[0] = p0;
             p[1] = p1;
@@ -99,5 +98,4 @@ class BSplineSegment : public Segment<T> {
 
 template <typename T>
 int Segment<T>::t = 15;
-
 

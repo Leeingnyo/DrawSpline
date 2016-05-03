@@ -9,14 +9,15 @@
 
 #include "segment.h"
 #include "spline.h"
+#include "quaternion_spline.h"
 
 #include "section.h"
 #include "parser.h"
 
 #define ZZZZ float(1)
 #define Clamp(val, min, max) ((val) > (max) ? (max) : ((val) < (min) ? (min) : (val)))
-#define SetColor() glColor3f(1, 1, 1)
 
+bool bone;
 int width, height; 
 
 glm::vec3 eye(0, 0, 100);
@@ -65,6 +66,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         is_shift = true;
     }
     
+    /*
     // Show all
     if (key == GLFW_KEY_ENTER && (action == GLFW_PRESS)){
         eye -= ori;
@@ -73,6 +75,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         glm::vec3 n_eye = glm::normalize(eye);
         float l_eye = glm::length(eye);
         eye = n_eye * float(2 / (tan(fov / 2 * 3.14 / 180) * 2));
+    }
+    */
+    // Toggle
+    if (key == GLFW_KEY_ENTER && (action == GLFW_PRESS)){
+        bone = !bone;
     }
 }
 
@@ -123,10 +130,10 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     if (is_shift){
         glm::vec3 v = glm::normalize(ori - eye);
-        eye += float(yoffset) * v * 0.1f;
+        eye += float(yoffset) * v * 1.0f;
     } else {
         fov -= yoffset * 0.5;
-        fov = Clamp(fov, 5, 60);
+        fov = Clamp(fov, 5, 90);
     }
 }
 
@@ -169,26 +176,24 @@ int main(int argc, char *argv[])
     /* Enable options */
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glFrontFace(GL_CW);
+    glFrontFace(GL_CCW);
     glDepthFunc(GL_LESS);
     
     /* Light */
-    /*
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_COLOR_MATERIAL);
-    */
     
     /* Init Data */
-    Spline<int> spline(Spline<int>::Kind::BSpline, false);
+    Spline<float> spline(Spline<float>::Kind::CatmullRom, false);
     spline.AddPoint(0);
     spline.AddPoint(5);
     spline.AddPoint(15);
     spline.AddPoint(0);
     
-    std::vector<int> &&points = spline.GeneratePoints();
+    std::vector<float> &&points = spline.GeneratePoints();
     
-    for (int point : points){
+    for (float point : points){
         // std::cout << point << std::endl;
     }
     
@@ -210,22 +215,22 @@ int main(int argc, char *argv[])
         {
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
-    	    gluPerspective(fov, ratio, 0.1, 200.0f);
+    	    gluPerspective(fov, ratio, 0.1, 500.0f);
         }
         
         /* Render */
         { // display
             glMatrixMode(GL_MODELVIEW);
             glLoadIdentity();
-            /*
+            
+    	    gluLookAt(eye.x, eye.y, eye.z, ori.x, ori.y, ori.z, up.x, up.y, up.z);
+            
             GLfloat ambientLight[] = {.8, .8, .8, 1};
             glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
             GLfloat diffuseLight[] = {.2, .2, .2, 1};
             glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
             GLfloat position[] = {1.0, 1.5, 0.0, 0.0};
             glLightfv(GL_LIGHT0, GL_POSITION, position);
-            */
-    	    gluLookAt(eye.x, eye.y, eye.z, ori.x, ori.y, ori.z, up.x, up.y, up.z);
             
             { // Draw Axis
                 glLineWidth(2.5);
@@ -265,7 +270,6 @@ int main(int argc, char *argv[])
 }
 
 void DrawSpline(std::vector<glm::vec3> &&points){
-    SetColor();
     glBegin(GL_LINE_STRIP);
     for (glm::vec3 point : points){
         glVertex3f(point.x, point.y, point.z);
@@ -273,19 +277,69 @@ void DrawSpline(std::vector<glm::vec3> &&points){
     glEnd();
 }
 
+void DrawSpline(std::vector<glm::vec3> &points){
+    glColor3f(1, 0, 0);
+    glBegin(GL_LINE_STRIP);
+    for (glm::vec3 point : points){
+        glVertex3f(point.x, point.y, point.z);
+    }
+    glEnd();
+}
+
+void DrawSurface(std::vector<glm::vec3> &&former, std::vector<glm::vec3> &&latter){
+    int size = former.size();
+    glBegin(GL_TRIANGLES);
+    for (int i = 0; i < size; i++){
+        glVertex3f(former[(i) % size].x, former[(i) % size].y, former[(i) % size].z);
+        glVertex3f(latter[(i) % size].x, latter[(i) % size].y, latter[(i) % size].z);
+        glVertex3f(former[(i + 1) % size].x, former[(i + 1) % size].y, former[(i + 1) % size].z);
+        
+        glVertex3f(latter[(i) % size].x, latter[(i) % size].y, latter[(i) % size].z);
+        glVertex3f(latter[(i + 1) % size].x, latter[(i + 1) % size].y, latter[(i + 1) % size].z);
+        glVertex3f(former[(i + 1) % size].x, former[(i + 1) % size].y, former[(i + 1) % size].z);
+        // 노말 폼 처리 
+    }
+    glEnd();
+}
+
 bool debug = true;
 
 void Surface::Draw(){
-    for (Section section : sections){
-        Spline<glm::vec3> rmflf_rjt(spline_type == SurfaceType::CatmullRom ? Spline<glm::vec3>::Kind::CatmullRom : Spline<glm::vec3>::Kind::BSpline, true);
-        for (glm::vec3 point : section.control_points){
-            // 쿼터니온을 곱한다 
-            // 스케일링부터 해도 된다 
-            glm::vec3 p = point * section.scaling_factor;
-            // p = q * p;
-            p = p + section.position;
-            rmflf_rjt.AddPoint(p);
+    int size = sections.size();
+    for (int i = 0; i < size - 1; i++){
+        Section &section_former = sections[i];
+        Section &section_latter = sections[i + 1];
+        Spline<glm::vec3> spline_for_draw_former(spline_type == SurfaceType::CatmullRom ? Spline<glm::vec3>::Kind::CatmullRom : Spline<glm::vec3>::Kind::BSpline, true);
+        for (glm::vec3 point : section_former.control_points){
+            glm::vec3 p = point;
+            p = p * section_former.scaling_factor;
+            p = section_former.rotation * p;
+            p = p + section_former.position;
+            spline_for_draw_former.AddPoint(p);
         }
-        DrawSpline(rmflf_rjt.GeneratePoints());
+        Spline<glm::vec3> spline_for_draw_latter(spline_type == SurfaceType::CatmullRom ? Spline<glm::vec3>::Kind::CatmullRom : Spline<glm::vec3>::Kind::BSpline, true);
+        for (glm::vec3 point : section_latter.control_points){
+            glm::vec3 p = point;
+            p = p * section_latter.scaling_factor;
+            p = section_latter.rotation * p;
+            p = p + section_latter.position;
+            spline_for_draw_latter.AddPoint(p);
+        }
+        if (bone){
+            glColor3f(1, 1, 0);
+            DrawSpline(spline_for_draw_former.GeneratePoints());
+            DrawSpline(spline_for_draw_latter.GeneratePoints());
+        } else {
+            glColor3f(1, 1, 0);
+            DrawSurface(spline_for_draw_former.GeneratePoints(), spline_for_draw_latter.GeneratePoints());
+        }
+    }
+    {
+        std::vector<glm::vec3> positions;
+        for (Section &section : sections){
+            positions.push_back(section.position);
+        }
+        glColor3f(1, 0, 0);
+        DrawSpline(positions);
     }
 }
