@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #define GLFW_INCLUDE_GLU
@@ -16,6 +17,8 @@
 
 #define ZZZZ float(1)
 #define Clamp(val, min, max) ((val) > (max) ? (max) : ((val) < (min) ? (min) : (val)))
+
+int G;
 
 bool bone;
 int width, height; 
@@ -189,6 +192,7 @@ int main(int argc, char *argv[])
     SurfaceBuilder &&builder = parser.Parse(argv[1]);
     // builder.Print();
     Surface surface = builder.Build();
+    //surface.ExtractSTL();
     
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -281,7 +285,7 @@ void DrawSurface(std::vector<glm::vec3> &&former, std::vector<glm::vec3> &&latte
     glBegin(GL_TRIANGLES);
     for (int i = 0; i < size; i++){
         glm::vec3 normal;
-        normal = glm::normalize(glm::cross(former[(i) % size] - latter[(i) % size], former[(i + 1) % size] - latter[(i) % size]));
+        normal = glm::normalize(glm::cross(former[(i + 1) % size] - latter[(i) % size], former[(i) % size] - latter[(i) % size]));
         glNormal3f(normal.x, normal.y, normal.z);
         glVertex3f(former[(i) % size].x, former[(i) % size].y, former[(i) % size].z);
         glVertex3f(latter[(i) % size].x, latter[(i) % size].y, latter[(i) % size].z);
@@ -298,6 +302,77 @@ void DrawSurface(std::vector<glm::vec3> &&former, std::vector<glm::vec3> &&latte
 bool debug = true;
 
 void Surface::Draw(){
+    int size = sections.size();
+    G = 0;
+    for (int i = 0; i < size - 1; i++){
+        Section &section_former = sections[i];
+        Section &section_latter = sections[i + 1];
+        Spline<glm::vec3> spline_for_draw_former(spline_type == SurfaceType::CatmullRom ? Spline<glm::vec3>::Kind::CatmullRom : Spline<glm::vec3>::Kind::BSpline, true);
+        for (glm::vec3 point : section_former.control_points){
+            glm::vec3 p = point;
+            p = p * section_former.scaling_factor;
+            p = section_former.rotation * p;
+            p = p + section_former.position;
+            spline_for_draw_former.AddPoint(p);
+        }
+        Spline<glm::vec3> spline_for_draw_latter(spline_type == SurfaceType::CatmullRom ? Spline<glm::vec3>::Kind::CatmullRom : Spline<glm::vec3>::Kind::BSpline, true);
+        for (glm::vec3 point : section_latter.control_points){
+            glm::vec3 p = point;
+            p = p * section_latter.scaling_factor;
+            p = section_latter.rotation * p;
+            p = p + section_latter.position;
+            spline_for_draw_latter.AddPoint(p);
+        }
+        glColor3f(1, 1, 0);
+
+        G++;
+        if (G >= 140 && G <= 168)
+            glColor3f(0, 1, 0);
+        if (bone){
+            DrawSpline(spline_for_draw_former.GeneratePoints());
+            DrawSpline(spline_for_draw_latter.GeneratePoints());
+        } else {
+            DrawSurface(spline_for_draw_former.GeneratePoints(), spline_for_draw_latter.GeneratePoints());
+        }
+    }
+    {
+        std::vector<glm::vec3> positions;
+        for (Section &section : sections){
+            positions.push_back(section.position);
+        }
+        glColor3f(1, 0, 0);
+        DrawSpline(positions);
+    }
+}
+
+void ExtractFacet(std::ofstream &ofst, std::vector<glm::vec3> &&former, std::vector<glm::vec3> &&latter){
+    int size = former.size();
+    for (int i = 0; i < size; i++){
+        glm::vec3 normal;
+        normal = glm::normalize(glm::cross(former[(i + 1) % size] * 100.f - latter[(i) % size] * 100.f, former[(i) % size] * 100.f - latter[(i) % size] * 100.f));
+        if (std::isnan(normal.x))
+            normal = glm::vec3(0, 0, 1);
+        ofst << "  facet normal " << normal.x << " " << normal.y << " " << normal.z << std::endl;
+        ofst << "    outer loop" << std::endl;
+        ofst << "      vertex " << former[(i) % size].z << " " << former[(i) % size].x << " " << former[(i) % size].y << std::endl;
+        ofst << "      vertex " << latter[(i) % size].z << " " << latter[(i) % size].x << " " << latter[(i) % size].y << std::endl;
+        ofst << "      vertex " << former[(i + 1) % size].z << " " << former[(i + 1) % size].x << " " << former[(i + 1) % size].y << std::endl;
+        ofst << "    endloop" << std::endl;
+        ofst << "  endfacet" << std::endl;
+        
+        ofst << "  facet normal " << normal.x << " " << normal.y << " " << normal.z << std::endl;
+        ofst << "    outer loop" << std::endl;
+        ofst << "      vertex " << latter[(i) % size].x << " " << latter[(i) % size].y << " " << latter[(i) % size].z << std::endl;
+        ofst << "      vertex " << latter[(i + 1) % size].x << " " << latter[(i + 1) % size].y << " " << latter[(i + 1) % size].z << std::endl;
+        ofst << "      vertex " << former[(i + 1) % size].x << " " << former[(i + 1) % size].y << " " << former[(i + 1) % size].z << std::endl;
+        ofst << "    endloop" << std::endl;
+        ofst << "  endfacet" << std::endl;
+    }
+}
+
+void Surface::ExtractSTL(){
+    std::ofstream stl_file("model.stl");
+    stl_file << "solid model" << std::scientific << std::endl;
     int size = sections.size();
     for (int i = 0; i < size - 1; i++){
         Section &section_former = sections[i];
@@ -318,21 +393,9 @@ void Surface::Draw(){
             p = p + section_latter.position;
             spline_for_draw_latter.AddPoint(p);
         }
-        if (bone){
-            glColor3f(1, 1, 0);
-            DrawSpline(spline_for_draw_former.GeneratePoints());
-            DrawSpline(spline_for_draw_latter.GeneratePoints());
-        } else {
-            glColor3f(1, 1, 0);
-            DrawSurface(spline_for_draw_former.GeneratePoints(), spline_for_draw_latter.GeneratePoints());
-        }
+        ExtractFacet(stl_file, spline_for_draw_former.GeneratePoints(), spline_for_draw_latter.GeneratePoints());
     }
-    {
-        std::vector<glm::vec3> positions;
-        for (Section &section : sections){
-            positions.push_back(section.position);
-        }
-        glColor3f(1, 0, 0);
-        DrawSpline(positions);
-    }
+    stl_file << "endsolid model" << std::endl;
+    stl_file.close();
 }
+

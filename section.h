@@ -39,6 +39,7 @@ class Surface {
             this->sections.insert(this->sections.end(), insert_sections.begin(), insert_sections.end());
         }
         void Draw();
+        void ExtractSTL();
 };
 
 class SurfaceBuilder {
