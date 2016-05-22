@@ -27,7 +27,7 @@ class CubicBezierSegment : public Segment<T> {
         }
         virtual std::vector<T> GeneratePoints(){
             std::vector<T> draw_points;
-            for (int i = 0; i <= Segment<T>::t; i++){
+            for (int i = 0; i < Segment<T>::t; i++){
                 T point{};
                 for (int pi = 0; pi < 4; pi++){
                     point += p[pi] * basis(pi, ((float)i / (float)Segment<T>::t));
@@ -85,7 +85,7 @@ class BSplineSegment : public Segment<T> {
         }
         virtual std::vector<T> GeneratePoints(){
             std::vector<T> draw_points;
-            for (int i = 0; i <= Segment<T>::t; i++){
+            for (int i = 0; i < Segment<T>::t; i++){
                 T point{};
                 for (int pi = 0; pi < 4; pi++){
                     point += p[pi] * basis(pi, ((float)i / (float)Segment<T>::t));
@@ -97,5 +97,5 @@ class BSplineSegment : public Segment<T> {
 };
 
 template <typename T>
-int Segment<T>::t = 10;
+int Segment<T>::t = 8;
 

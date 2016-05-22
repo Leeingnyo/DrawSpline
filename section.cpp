@@ -95,7 +95,8 @@ Surface SurfaceBuilder::Build(){
         // 벡터 섹션을 만들고 
         // 스플라인 한 개수 만큼 
         // 섹션에 Positoin, Scaling Factor, Quaternion, 컨트롤 포인터 넣기 
-        surface.AddSection(sections);
+        surface.AddArea(sections);
     }
+    surface.CalculateNormals();
     return surface;
 }

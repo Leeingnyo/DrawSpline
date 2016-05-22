@@ -178,9 +178,12 @@ int main(int argc, char *argv[])
     
     /* Enable options */
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glFrontFace(GL_CCW);
+//    glEnable(GL_CULL_FACE);
+//    glFrontFace(GL_CCW);
     glDepthFunc(GL_LESS);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable( GL_BLEND );
+    glClearColor(0.0,0.0,0.0,0.0);
     
     /* Light */
     glEnable(GL_LIGHTING);
@@ -193,6 +196,13 @@ int main(int argc, char *argv[])
     // builder.Print();
     Surface surface = builder.Build();
     //surface.ExtractSTL();
+    
+    GLfloat ambientLight[] = {.2, .2, .2, 1};
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
+    GLfloat diffuseLight[] = {.8, .8, .8, 1};
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
+    GLfloat position[] = {0.0, 10.0, 0.0, 0.0};
+    glLightfv(GL_LIGHT0, GL_POSITION, position);
     
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -216,13 +226,6 @@ int main(int argc, char *argv[])
             glLoadIdentity();
             
     	    gluLookAt(eye.x, eye.y, eye.z, ori.x, ori.y, ori.z, up.x, up.y, up.z);
-            
-            GLfloat ambientLight[] = {.8, .8, .8, 1};
-            glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
-            GLfloat diffuseLight[] = {.2, .2, .2, 1};
-            glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
-            GLfloat position[] = {1.0, 1.5, 0.0, 0.0};
-            glLightfv(GL_LIGHT0, GL_POSITION, position);
             
             { // Draw Axis
                 glLineWidth(2.5);
@@ -263,85 +266,36 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void DrawSpline(std::vector<glm::vec3> &&points){
-    glBegin(GL_LINE_STRIP);
-    for (glm::vec3 point : points){
-        glVertex3f(point.x, point.y, point.z);
-    }
-    glEnd();
-}
-
-void DrawSpline(std::vector<glm::vec3> &points){
-    glColor3f(1, 0, 0);
-    glBegin(GL_LINE_STRIP);
-    for (glm::vec3 point : points){
-        glVertex3f(point.x, point.y, point.z);
-    }
-    glEnd();
-}
-
-void DrawSurface(std::vector<glm::vec3> &&former, std::vector<glm::vec3> &&latter){
-    int size = former.size();
-    glBegin(GL_TRIANGLES);
-    for (int i = 0; i < size; i++){
-        glm::vec3 normal;
-        normal = glm::normalize(glm::cross(former[(i + 1) % size] - latter[(i) % size], former[(i) % size] - latter[(i) % size]));
-        glNormal3f(normal.x, normal.y, normal.z);
-        glVertex3f(former[(i) % size].x, former[(i) % size].y, former[(i) % size].z);
-        glVertex3f(latter[(i) % size].x, latter[(i) % size].y, latter[(i) % size].z);
-        glVertex3f(former[(i + 1) % size].x, former[(i + 1) % size].y, former[(i + 1) % size].z);
-        
-        glVertex3f(latter[(i) % size].x, latter[(i) % size].y, latter[(i) % size].z);
-        glVertex3f(latter[(i + 1) % size].x, latter[(i + 1) % size].y, latter[(i + 1) % size].z);
-        glVertex3f(former[(i + 1) % size].x, former[(i + 1) % size].y, former[(i + 1) % size].z);
-        // ³ë¸» Æû Ã³¸® 
-    }
-    glEnd();
-}
-
 bool debug = true;
 
 void Surface::Draw(){
-    int size = sections.size();
-    G = 0;
-    for (int i = 0; i < size - 1; i++){
-        Section &section_former = sections[i];
-        Section &section_latter = sections[i + 1];
-        Spline<glm::vec3> spline_for_draw_former(spline_type == SurfaceType::CatmullRom ? Spline<glm::vec3>::Kind::CatmullRom : Spline<glm::vec3>::Kind::BSpline, true);
-        for (glm::vec3 point : section_former.control_points){
-            glm::vec3 p = point;
-            p = p * section_former.scaling_factor;
-            p = section_former.rotation * p;
-            p = p + section_former.position;
-            spline_for_draw_former.AddPoint(p);
+    glColor3f(1, 1, 0);
+    int length = areas.size();
+    for (int l = 0; l < length - 1; l++){
+        std::vector<glm::vec3> &former = areas[l];
+        std::vector<glm::vec3> &latter = areas[l + 1];
+        std::vector<glm::vec3> &normal_former = normals[l];
+        std::vector<glm::vec3> &normal_latter = normals[l + 1];
+        int size = former.size();
+        glBegin(GL_TRIANGLES);
+        for (int i = 0; i < size; i++){
+            glNormal3f(normal_former[(i) % size].x, normal_former[(i) % size].y, normal_former[(i) % size].z);
+            glVertex3f(former[(i) % size].x, former[(i) % size].y, former[(i) % size].z);
+            glNormal3f(normal_latter[(i) % size].x, normal_latter[(i) % size].y, normal_latter[(i) % size].z);
+            glVertex3f(latter[(i) % size].x, latter[(i) % size].y, latter[(i) % size].z);
+            glNormal3f(normal_former[(i + 1) % size].x, normal_former[(i + 1) % size].y, normal_former[(i + 1) % size].z);
+            glVertex3f(former[(i + 1) % size].x, former[(i + 1) % size].y, former[(i + 1) % size].z);
+            
+            glNormal3f(normal_latter[(i) % size].x, normal_latter[(i) % size].y, normal_latter[(i) % size].z);
+            glVertex3f(latter[(i) % size].x, latter[(i) % size].y, latter[(i) % size].z);
+            glNormal3f(normal_latter[(i + 1) % size].x, normal_latter[(i + 1) % size].y, normal_latter[(i + 1) % size].z);
+            glVertex3f(latter[(i + 1) % size].x, latter[(i + 1) % size].y, latter[(i + 1) % size].z);
+            glNormal3f(normal_former[(i + 1) % size].x, normal_former[(i + 1) % size].y, normal_former[(i + 1) % size].z);
+            glVertex3f(former[(i + 1) % size].x, former[(i + 1) % size].y, former[(i + 1) % size].z);
+            /*
+            */
         }
-        Spline<glm::vec3> spline_for_draw_latter(spline_type == SurfaceType::CatmullRom ? Spline<glm::vec3>::Kind::CatmullRom : Spline<glm::vec3>::Kind::BSpline, true);
-        for (glm::vec3 point : section_latter.control_points){
-            glm::vec3 p = point;
-            p = p * section_latter.scaling_factor;
-            p = section_latter.rotation * p;
-            p = p + section_latter.position;
-            spline_for_draw_latter.AddPoint(p);
-        }
-        glColor3f(1, 1, 0);
-
-        G++;
-        if (G >= 140 && G <= 168)
-            glColor3f(0, 1, 0);
-        if (bone){
-            DrawSpline(spline_for_draw_former.GeneratePoints());
-            DrawSpline(spline_for_draw_latter.GeneratePoints());
-        } else {
-            DrawSurface(spline_for_draw_former.GeneratePoints(), spline_for_draw_latter.GeneratePoints());
-        }
-    }
-    {
-        std::vector<glm::vec3> positions;
-        for (Section &section : sections){
-            positions.push_back(section.position);
-        }
-        glColor3f(1, 0, 0);
-        DrawSpline(positions);
+        glEnd();
     }
 }
 
@@ -373,6 +327,7 @@ void ExtractFacet(std::ofstream &ofst, std::vector<glm::vec3> &&former, std::vec
 void Surface::ExtractSTL(){
     std::ofstream stl_file("model.stl");
     stl_file << "solid model" << std::scientific << std::endl;
+    /*
     int size = sections.size();
     for (int i = 0; i < size - 1; i++){
         Section &section_former = sections[i];
@@ -395,6 +350,7 @@ void Surface::ExtractSTL(){
         }
         ExtractFacet(stl_file, spline_for_draw_former.GeneratePoints(), spline_for_draw_latter.GeneratePoints());
     }
+    */
     stl_file << "endsolid model" << std::endl;
     stl_file.close();
 }

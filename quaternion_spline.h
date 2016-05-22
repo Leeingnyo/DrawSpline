@@ -6,7 +6,7 @@ namespace Quaternion {
         
         std::vector<glm::quat> quaternion_spline;
         
-        for (int i = 0; i <= t; i++) {
+        for (int i = 0; i < t; i++) {
             glm::quat f00 = glm::mix(q0, q1, (float)i / (float)t);
             glm::quat f01 = glm::mix(q1, q2, (float)i / (float)t);
             glm::quat f02 = glm::mix(q2, q3, (float)i / (float)t);
