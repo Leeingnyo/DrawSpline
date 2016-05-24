@@ -1,20 +1,20 @@
 
 namespace Material{
     float color[][3]={
-        {1,0,0}, // Haruka Ruby
-        {0,0,1}, // Chihaya Sapphire
-        {1,1,0}, // Mami Gold
-        {1,0.5,1}, // Iori iPhone pink
-        {0.5,0,0.25}, // Takane 형용할 수 없는 
-        {0,0.75,0.75}, // Hibiki Turquoise
-        {0.5,0,1}, // Azusa  MnM chocolate purple
-        {1,1,1}, // Yukiho Cool-White
-        {1,1,0}, // Ami Gold
-        {0.1,0.1,0.1}, // Makoto Obsidian
-        {1,0.5,0}, // Yayoi Copper
-        {0,0.5,0}, // Litsuko Emerald
-        {0,1,0}, // Miki Jade
-        {1.0f, 1.0f, 0.5f} // Kotori boiled egg yolk
+        {1,0,0}, // Ruby
+        {0,0,1}, // Sapphire
+        {1,1,0}, // Gold
+        {1,0.5,1}, // iPhone pink
+        {0.5,0,0.25}, // 형용할 수 없는 
+        {0,0.75,0.75}, // Turquoise
+        {0.5,0,1}, // MnM chocolate purple
+        {1,1,1}, // Cool-White
+        {1,1,0}, // Gold
+        {0.1,0.1,0.1}, // Obsidian
+        {1,0.5,0}, // Copper
+        {0,0.5,0}, // Emerald
+        {0,1,0}, // Jade
+        {1.0f, 1.0f, 0.5f} // boiled egg yolk
     };
     void Ruby(){
         float mat_ambient[] = { 0.1745f, 0.01175f, 0.01175f, 1.0f };
@@ -70,7 +70,7 @@ namespace Material{
         GLfloat amb[]={0.12f,0.1f,0.22f,1.0f};
         GLfloat diff[]={0.61f,0.38f,0.86f,1.0f};
         GLfloat spec[]={1.0f,1.0f,1.0f,1.0f};
-        GLfloat shine=500.0f;
+        GLfloat shine=128.0f;
         glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,amb);
         glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,diff);
         glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,spec);
