@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <vector>
 #include <cmath>
 #define GLFW_INCLUDE_GLU
@@ -14,6 +15,10 @@
 
 #include "section.h"
 #include "parser.h"
+
+#include "material.h"
+#include "cube.h"
+#include "sphere.h" 
 
 #define ZZZZ float(1)
 #define Clamp(val, min, max) ((val) > (max) ? (max) : ((val) < (min) ? (min) : (val)))
@@ -178,18 +183,56 @@ int main(int argc, char *argv[])
     
     /* Enable options */
     glEnable(GL_DEPTH_TEST);
-//    glEnable(GL_CULL_FACE);
-//    glFrontFace(GL_CCW);
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
     glDepthFunc(GL_LESS);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable( GL_BLEND );
+    glEnable(GL_BLEND);
     glClearColor(0.0,0.0,0.0,0.0);
     
     /* Light */
+    //glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    glEnable(GL_COLOR_MATERIAL);
+    {
+        GLfloat ambientLight[] = {.1, .1, .1, 1};
+        glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
+        GLfloat diffuseLight[] = {0.4, 0.4, 0.4, 1};
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
+        GLfloat position[] = {0.0, 0.0, 100.0, 0.0};
+        glLightfv(GL_LIGHT0, GL_POSITION, position);
+    }
     
+    glEnable(GL_LIGHT1);
+    {
+        GLfloat ambientLight[] = {.05, .05, .05, 1};
+        glLightfv(GL_LIGHT1, GL_AMBIENT, ambientLight);
+        GLfloat diffuseLight[] = {0.2, 0.2, 0.2, 1};
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuseLight);
+        GLfloat position[] = {0.0, 100.0, 0.0, 0.0};
+        glLightfv(GL_LIGHT1, GL_POSITION, position);
+    }
+    
+    glEnable(GL_LIGHT2);
+    {
+        GLfloat ambientLight[] = {.05, .05, .05, 1};
+        glLightfv(GL_LIGHT2, GL_AMBIENT, ambientLight);
+        GLfloat diffuseLight[] = {0.2, 0.2, 0.2, 1};
+        glLightfv(GL_LIGHT2, GL_DIFFUSE, diffuseLight);
+        GLfloat position[] = {100.0, 0.0, 0.0, 0.0};
+        glLightfv(GL_LIGHT2, GL_POSITION, position);
+    }
+    
+    glEnable(GL_LIGHT3);
+    {
+        GLfloat ambientLight[] = {.05, .05, .05, 1};
+        glLightfv(GL_LIGHT3, GL_AMBIENT, ambientLight);
+        GLfloat diffuseLight[] = {0.2, 0.2, 0.2, 1};
+        glLightfv(GL_LIGHT3, GL_DIFFUSE, diffuseLight);
+        GLfloat position[] = {100.0, 100.0, 1000.0, 0.0};
+        glLightfv(GL_LIGHT3, GL_POSITION, position);
+    }
+
     /* Init Data */
     Parser parser;
     SurfaceBuilder &&builder = parser.Parse(argv[1]);
@@ -197,12 +240,19 @@ int main(int argc, char *argv[])
     Surface surface = builder.Build();
     //surface.ExtractSTL();
     
-    GLfloat ambientLight[] = {.2, .2, .2, 1};
-    glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
-    GLfloat diffuseLight[] = {.8, .8, .8, 1};
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
-    GLfloat position[] = {0.0, 10.0, 0.0, 0.0};
-    glLightfv(GL_LIGHT0, GL_POSITION, position);
+    Cube cube(glm::vec3(2.5f, 0, 0), 8.0f, glm::quat());
+    
+    std::vector<Sphere> spheres;
+    for (int i = 0; i < 13; i++){
+        spheres.push_back(Sphere(
+                glm::vec3(
+                    cos((360.0 / 13.0) * i * 3.141592 / 180) * 30, 0, 
+                    sin((360.0 / 13.0) * i * 3.141592 / 180) * 30
+                ), 
+                2.0f
+            )
+        );
+    }
     
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -251,8 +301,31 @@ int main(int argc, char *argv[])
             }
             
             glShadeModel(GL_SMOOTH);
-            
+            Material::Yolk();
+            glColor3fv(Material::color[13]);
             surface.Draw();
+            // draw opaque object
+            
+            glPushMatrix();
+            glRotatef(glfwGetTime() * 30.f, 0, 1, 0);
+            for (int i = 0; i < 13; i++){
+                glColor3fv(Material::color[i]);
+                Material::func[i]();
+                glPushMatrix();
+                spheres[i].Draw();
+                glPopMatrix();
+            }
+            glPopMatrix();
+            // draw material objects
+            
+            glEnable(GL_COLOR_MATERIAL);
+            glColor4f(1, 0, 0, 0.5f);
+            glCullFace(GL_FRONT);
+            cube.Draw();
+            glCullFace(GL_BACK);
+            cube.Draw();
+            glDisable(GL_COLOR_MATERIAL);
+            // draw translucent cube
             
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
@@ -266,10 +339,101 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-bool debug = true;
+void Cube::Draw(){
+    glm::vec3 view = eye - ori;
+    std::vector<std::vector<glm::vec3>> areas;
+    std::vector<glm::vec3> points_;
+    
+    for (int i = 0; i < points.size(); i++)
+        points_.push_back(rotation * (scale * points[i]));
+    
+    areas.push_back({points_[2], points_[1], points_[0]});
+    areas.push_back({points_[0], points_[3], points_[2]});
+    
+    areas.push_back({points_[4], points_[5], points_[6]});
+    areas.push_back({points_[6], points_[7], points_[4]});
+    
+    areas.push_back({points_[0], points_[1], points_[5]});
+    areas.push_back({points_[5], points_[4], points_[0]});
+    
+    areas.push_back({points_[1], points_[2], points_[6]});
+    areas.push_back({points_[6], points_[5], points_[1]});
+    
+    areas.push_back({points_[2], points_[3], points_[7]});
+    areas.push_back({points_[7], points_[6], points_[2]});
+    
+    areas.push_back({points_[3], points_[0], points_[4]});
+    areas.push_back({points_[4], points_[7], points_[3]});
+    // prepare areas
+    
+    std::sort(areas.begin(), areas.end(), [view](std::vector<glm::vec3> a, std::vector<glm::vec3> b){
+        glm::vec3 normal_a = glm::normalize(glm::cross(a[1] - a[0], a[2] - a[1]));
+        glm::vec3 normal_b = glm::normalize(glm::cross(b[1] - b[0], b[2] - b[1]));
+        return glm::dot(normal_a, view) < glm::dot(normal_b, view);
+    });
+    // sort
+    
+    glPushMatrix();
+    glTranslatef(position.x, position.y, position.z);
+    glBegin(GL_TRIANGLES);
+    for (int i = 0; i < areas.size(); i++){
+        std::vector<glm::vec3> &area = areas[i];
+        glm::vec3 normal = glm::normalize(glm::cross(area[1] - area[0], area[2] - area[1]));
+        glNormal3f(normal.x, normal.y, normal.z);
+        glVertex3f(area[0].x, area[0].y, area[0].z);
+        glVertex3f(area[1].x, area[1].y, area[1].z);
+        glVertex3f(area[2].x, area[2].y, area[2].z);
+    }
+    glEnd();
+    glPopMatrix();
+    // draw
+}
+
+void Sphere::Draw(){
+    std::vector<std::vector<glm::vec3>> areas;
+    
+    int n = 10;
+    glm::vec3 p[n + 1][n + 1];
+    for (int i = 0; i <= n; i++){
+        for (int j = 0; j < n; j++){
+            p[i][j].y = scale * cos(180.0 / n * i * 3.141592 / 180.0);
+            p[i][j].x = scale * sin(180.0 / n * i * 3.141592 / 180.0) * cos(360.0 / n * j * 3.141592 / 180.0);
+            p[i][j].z = scale * sin(180.0 / n * i * 3.141592 / 180.0) * sin(360.0 / n * j * 3.141592 / 180.0);
+        }
+    }
+    
+    glPushMatrix();
+    glTranslatef(position.x, position.y, position.z);
+    glBegin(GL_QUADS);
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
+            std::vector<glm::vec3> area;
+            area.push_back(p[i][j]);
+            area.push_back(p[i + 1][j]);
+            area.push_back(p[i + 1][(j + 1) % n]);
+            area.push_back(p[i][(j + 1) % n]);
+            {
+                glm::vec3 normal = glm::normalize(glm::cross(area[1] - area[0], area[3] - area[2]));
+                if (glm::dot(normal, area[0]) > 0)
+                    normal = -normal;
+                glNormal3f(normal.x, normal.y, normal.z);
+            }
+            //glNormal3f(area[0].x, area[0].y, area[0].z);
+            glVertex3f(area[0].x, area[0].y, area[0].z);
+            //glNormal3f(area[1].x, area[1].y, area[1].z);
+            glVertex3f(area[1].x, area[1].y, area[1].z);
+            //glNormal3f(area[2].x, area[2].y, area[2].z);
+            glVertex3f(area[2].x, area[2].y, area[2].z);
+            //glNormal3f(area[3].x, area[3].y, area[3].z);
+            glVertex3f(area[3].x, area[3].y, area[3].z);
+        }
+    }
+    glEnd();
+    glPopMatrix();
+    // draw
+}
 
 void Surface::Draw(){
-    glColor3f(1, 1, 0);
     int length = areas.size();
     for (int l = 0; l < length - 1; l++){
         std::vector<glm::vec3> &former = areas[l];
