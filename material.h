@@ -49,8 +49,8 @@ namespace Material{
     void iPhonePink(){
         GLfloat amb[]={0.32f,0.2f,0.22f,1.0f};
         GLfloat diff[]={0.81f,0.48f,0.56f,1.0f};
-        GLfloat spec[]={0.0f,0.0f,0.0f,1.0f};
-        GLfloat shine=0.0f;
+        GLfloat spec[]={.3f,.3f,.3f,1.0f};
+        GLfloat shine=10.0f;
         glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,amb);
         glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,diff);
         glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,spec);
@@ -140,7 +140,7 @@ namespace Material{
     void Yolk(){
         GLfloat amb[]={0.36f,0.36f,0.19f,1.0f};
         GLfloat diff[]={0.94f,0.94f,0.55f,1.0f};
-        GLfloat spec[]={0.17f,0.15f,0.0f,1.0f};
+        GLfloat spec[]={0.01f,0.01f,0.0f,1.0f};
         GLfloat shine = 22.0f;
         glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,amb);
         glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,diff);
