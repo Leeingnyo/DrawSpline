@@ -1,6 +1,6 @@
 # Jar
 BSPLINE
-8 #Cross Section Number
+9 #Cross Section Number
 4 # Control Pointer Number
 
 # -1
@@ -68,6 +68,15 @@ BSPLINE
 0 20 0
 
 # 6
+1 1
+-1 1
+-1 -1
+1 -1
+0
+0 0 0 1
+0 18 0
+
+# 7
 1 1
 -1 1
 -1 -1

@@ -269,35 +269,43 @@ int main(int argc, char *argv[])
     {
         std::vector<glm::vec3> d;
         {
-            d.push_back(glm::vec3(6, 0, 0));
-            d.push_back(glm::vec3(0, 0, 0));
+            d.push_back(glm::vec3(1, 2, 0));
             d.push_back(glm::vec3(0, 0, 4));
+            d.push_back(glm::vec3(0, 0, 0));
         }
         std::vector<glm::vec3> b;
         {
-            b.push_back(glm::vec3(3, 2, 0));
-            b.push_back(glm::vec3(3, -2, 0));
-            b.push_back(glm::vec3(3, 0, 4));
+            b.push_back(glm::vec3(1, 2, 0));
+            b.push_back(glm::vec3(2, 0, 4));
+            b.push_back(glm::vec3(2, 0, 0));
         }
         std::vector<glm::vec3> a;
         {
-            a.push_back(glm::vec3(4, 1, 0));
-            a.push_back(glm::vec3(4, -1, 0));
-            a.push_back(glm::vec3(4, 0, 2));
+            a.push_back(glm::vec3(3, 2, 0));
+            a.push_back(glm::vec3(2, 0, 0));
+            a.push_back(glm::vec3(2, 0, 4));
         }
         std::vector<glm::vec3> c;
         {
-            c.push_back(glm::vec3(1, 1, 0));
-            c.push_back(glm::vec3(1, -1, 0));
-            c.push_back(glm::vec3(1, 1, 2));
+            c.push_back(glm::vec3(3, 2, 0));
+            c.push_back(glm::vec3(4, 0, 0));
+            c.push_back(glm::vec3(4, 0, 4));
         }
+        std::vector<glm::vec3> e;
+        {
+            e.push_back(glm::vec3(0, 2, 0));
+            e.push_back(glm::vec3(0, 0, 2));
+            e.push_back(glm::vec3(0, 0, 0));
+        }
+//        bsp_tree.insert(c, Material::TranslucentWhite);
+//        bsp_tree.insert(a, Material::TranslucentWhite);
 //        bsp_tree.insert(b, Material::TranslucentWhite);
-//        bsp_tree.insert(d, Material::TranslucentRed);
-        //bsp_tree.insert(a, Material::TranslucentWhite);
-        //bsp_tree.insert(c, Material::TranslucentWhite);
+//        bsp_tree.insert(d, Material::TranslucentWhite);
+//        bsp_tree.insert(e, Material::TranslucentRed);
     }
 //    bsp_tree.Print(glm::vec3(-10, 6, 10));
-//    bsp_tree.Print(glm::vec3(-10, -6, 10));
+//    std::cout << std::endl;
+//    bsp_tree.Print(glm::vec3(10, 6, 10));
     
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))

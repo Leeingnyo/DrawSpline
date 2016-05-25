@@ -164,7 +164,7 @@ namespace Material{
     };
     void TranslucentRed(){
         GLfloat amb[]={0.5,0,0,0.1f};
-        GLfloat diff[]={1,0,0,.8f};
+        GLfloat diff[]={1,0,0,.33f};
         GLfloat spec[]={0,0,0,1.0f};
         GLfloat shine = 0;
         glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,amb);
@@ -173,8 +173,8 @@ namespace Material{
         glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shine);
     }
     void TranslucentWhite(){
-        GLfloat amb[]={0.1,.1,.1,0.2f};
-        GLfloat diff[]={1,1,1,.8f};
+        GLfloat amb[]={0.1,.1,.1,0.1f};
+        GLfloat diff[]={1,1,1,.33f};
         GLfloat spec[]={0,0,0,1.0f};
         GLfloat shine = 0;
         glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,amb);
