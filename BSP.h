@@ -87,14 +87,14 @@ class BSPTree {
                 {
                     const glm::vec3 &target = inserted[size - 1];
                     float dn = glm::dot(N, target);
-                    int state = ((dn - d) == 0 ? same : ((dn - d) > 0));
+                    int state = (abs(dn - d) < 0.001 ? same : ((dn - d) > 0));
                     prev_state = state;
                     prev_point = target;
                 }
                 for (int i = 0; i < size; i++){
                     const glm::vec3 &target = inserted[i];
                     float dn = glm::dot(N, target);
-                    int state = ((dn - d) == 0 ? same : ((dn - d) > 0));
+                    int state = (abs(dn - d) < 0.001 ? same : ((dn - d) > 0));
                     // 내 각 점이 어디에 있는지 확인한다 
                     if (prev_state != state){
                     // prev 가 지금이랑 값이 다르면 

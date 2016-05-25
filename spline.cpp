@@ -8,5 +8,5 @@
 #include "quaternion_spline.h"
 
 namespace Quaternion {
-    int t = 2;
+    int t = 6;
 };

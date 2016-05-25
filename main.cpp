@@ -259,12 +259,12 @@ int main(int argc, char *argv[])
     
     BSPTree bsp_tree;
     for (std::vector<glm::vec3> &area : cube.GetArea()){
-        //bsp_tree.insert(area, Material::TranslucentRed);
+        bsp_tree.insert(area, Material::TranslucentRed);
     }
     SurfaceBuilder &&builder2 = parser.Parse("Jar.txt");
     Surface Jar = builder2.Build();
     for (std::vector<glm::vec3> &area : Jar.GetArea()){
-        //bsp_tree.insert(area, Material::TranslucentWhite);
+        bsp_tree.insert(area, Material::TranslucentWhite);
     }
     {
         std::vector<glm::vec3> d;
@@ -291,13 +291,13 @@ int main(int argc, char *argv[])
             c.push_back(glm::vec3(1, -1, 0));
             c.push_back(glm::vec3(1, 1, 2));
         }
-        bsp_tree.insert(b, Material::TranslucentWhite);
-        bsp_tree.insert(d, Material::TranslucentRed);
+//        bsp_tree.insert(b, Material::TranslucentWhite);
+//        bsp_tree.insert(d, Material::TranslucentRed);
         //bsp_tree.insert(a, Material::TranslucentWhite);
         //bsp_tree.insert(c, Material::TranslucentWhite);
     }
-    bsp_tree.Print(glm::vec3(-10, 6, 10));
-    bsp_tree.Print(glm::vec3(-10, -6, 10));
+//    bsp_tree.Print(glm::vec3(-10, 6, 10));
+//    bsp_tree.Print(glm::vec3(-10, -6, 10));
     
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -350,7 +350,7 @@ int main(int argc, char *argv[])
             glShadeModel(GL_SMOOTH);
             Material::Yolk();
             glColor3fv(Material::color[13]);
-            //surface.Draw();
+            surface.Draw();
             // draw opaque object
             
             glPushMatrix();
@@ -370,9 +370,9 @@ int main(int argc, char *argv[])
             // draw translucent cube
             
             glCullFace(GL_FRONT);
-            bsp_tree.Draw(ori - eye);
+            bsp_tree.Draw(eye);
             glCullFace(GL_BACK);
-            bsp_tree.Draw(ori - eye);
+            bsp_tree.Draw(eye);
             
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
@@ -523,7 +523,7 @@ void BSPNode::Draw(const glm::vec3 &camera) const {
     {
         for (glm::vec3 gon : polygon){
             glVertex3f(gon.x, gon.y, gon.z);
-//            std::cout << gon.x << " " << gon.y << " " << gon.z << std::endl;
+//            std::cout << "(" << gon.x << " " << gon.y << " " << gon.z << ")";
         };
 //        std::cout << std::endl;
     }
