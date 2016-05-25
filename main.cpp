@@ -18,7 +18,9 @@
 
 #include "material.h"
 #include "cube.h"
-#include "sphere.h" 
+#include "sphere.h"
+
+#include "BSP.h" 
 
 #define ZZZZ float(1)
 #define Clamp(val, min, max) ((val) > (max) ? (max) : ((val) < (min) ? (min) : (val)))
@@ -196,7 +198,7 @@ int main(int argc, char *argv[])
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     {
-        GLfloat ambientLight[] = {.05, .05, .05, 05};
+        GLfloat ambientLight[] = {.05, .05, .05, 0.5};
         glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
         GLfloat diffuseLight[] = {0.2, 0.2, 0.2, 1};
         glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
@@ -255,6 +257,48 @@ int main(int argc, char *argv[])
         );
     }
     
+    BSPTree bsp_tree;
+    for (std::vector<glm::vec3> &area : cube.GetArea()){
+        //bsp_tree.insert(area, Material::TranslucentRed);
+    }
+    SurfaceBuilder &&builder2 = parser.Parse("Jar.txt");
+    Surface Jar = builder2.Build();
+    for (std::vector<glm::vec3> &area : Jar.GetArea()){
+        //bsp_tree.insert(area, Material::TranslucentWhite);
+    }
+    {
+        std::vector<glm::vec3> d;
+        {
+            d.push_back(glm::vec3(6, 0, 0));
+            d.push_back(glm::vec3(0, 0, 0));
+            d.push_back(glm::vec3(0, 0, 4));
+        }
+        std::vector<glm::vec3> b;
+        {
+            b.push_back(glm::vec3(3, 2, 0));
+            b.push_back(glm::vec3(3, -2, 0));
+            b.push_back(glm::vec3(3, 0, 4));
+        }
+        std::vector<glm::vec3> a;
+        {
+            a.push_back(glm::vec3(4, 1, 0));
+            a.push_back(glm::vec3(4, -1, 0));
+            a.push_back(glm::vec3(4, 0, 2));
+        }
+        std::vector<glm::vec3> c;
+        {
+            c.push_back(glm::vec3(1, 1, 0));
+            c.push_back(glm::vec3(1, -1, 0));
+            c.push_back(glm::vec3(1, 1, 2));
+        }
+        bsp_tree.insert(b, Material::TranslucentWhite);
+        bsp_tree.insert(d, Material::TranslucentRed);
+        //bsp_tree.insert(a, Material::TranslucentWhite);
+        //bsp_tree.insert(c, Material::TranslucentWhite);
+    }
+    bsp_tree.Print(glm::vec3(-10, 6, 10));
+    bsp_tree.Print(glm::vec3(-10, -6, 10));
+    
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -278,6 +322,7 @@ int main(int argc, char *argv[])
             
     	    gluLookAt(eye.x, eye.y, eye.z, ori.x, ori.y, ori.z, up.x, up.y, up.z);
             
+            glEnable(GL_COLOR_MATERIAL);
             { // Draw Axis
                 glLineWidth(2.5);
                 glColor3f(1.0, 0.0, 0.0);
@@ -300,11 +345,12 @@ int main(int argc, char *argv[])
                 // z
                 glLineWidth(1);
             }
+            glDisable(GL_COLOR_MATERIAL);
             
             glShadeModel(GL_SMOOTH);
             Material::Yolk();
             glColor3fv(Material::color[13]);
-            surface.Draw();
+            //surface.Draw();
             // draw opaque object
             
             glPushMatrix();
@@ -320,12 +366,13 @@ int main(int argc, char *argv[])
             
             glEnable(GL_COLOR_MATERIAL);
             glColor4f(1, 0, 0, 0.5f);
-            glCullFace(GL_FRONT);
-            cube.Draw();
-            glCullFace(GL_BACK);
-            cube.Draw();
             glDisable(GL_COLOR_MATERIAL);
             // draw translucent cube
+            
+            glCullFace(GL_FRONT);
+            bsp_tree.Draw(ori - eye);
+            glCullFace(GL_BACK);
+            bsp_tree.Draw(ori - eye);
             
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
@@ -449,6 +496,41 @@ void Sphere::Draw(){
     glEnd();
     glPopMatrix();
     // draw
+}
+
+void BSPNode::Draw(const glm::vec3 &camera) const {
+    const BSPNode *first;
+    const BSPNode *later;
+    glm::vec3 N = glm::cross(polygon[1] - polygon[0], polygon[2] - polygon[1]);
+    float d = glm::dot(N, polygon[0]);
+    
+    if (glm::dot(N, camera) - d <= 0){
+        first = this->front;
+        later = this->back;
+    }
+    else{
+        first = this->back;
+        later = this->front;
+    }
+    
+    if (first){
+        first->Draw(camera);
+    }
+    material_func();
+    glBegin(GL_TRIANGLES);
+    glNormal3f(N.x, N.y, N.z);
+//    std::cout << "³ë¸»" << N.x << " " << N.y << " " << N.z << std::endl;
+    {
+        for (glm::vec3 gon : polygon){
+            glVertex3f(gon.x, gon.y, gon.z);
+//            std::cout << gon.x << " " << gon.y << " " << gon.z << std::endl;
+        };
+//        std::cout << std::endl;
+    }
+    glEnd();
+    if (later){
+        later->Draw(camera);
+    }
 }
 
 void Surface::Draw(){

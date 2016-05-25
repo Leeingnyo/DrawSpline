@@ -97,5 +97,5 @@ class BSplineSegment : public Segment<T> {
 };
 
 template <typename T>
-int Segment<T>::t = 8;
+int Segment<T>::t = 2;
 

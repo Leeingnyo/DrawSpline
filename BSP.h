@@ -11,9 +11,7 @@ class BSPNode {
             this->polygon = polygon;
             this->material_func = material_func;
         }
-        void Draw(const glm::vec3 &camera) const {
-            
-        }
+        void Draw(const glm::vec3 &camera) const;
         void Delete(){
             if (front){
                 front->Delete();
@@ -31,7 +29,7 @@ class BSPNode {
             glm::vec3 N = glm::cross(polygon[1] - polygon[0], polygon[2] - polygon[1]);
             float d = glm::dot(N, polygon[0]);
             
-            if (glm::dot(N, camera) - d < 0){
+            if (glm::dot(N, camera) - d <= 0){
                 // 카메라가 뒤에 있으면 
                 first = this->front; 
                 later = this->back;
@@ -59,9 +57,15 @@ class BSPNode {
 class BSPTree {
     private:
         BSPNode *root = NULL;
-        enum { back, front };
+        enum { back, front, same };
         void insert(BSPNode *&node, const std::vector<glm::vec3> &inserted, void (*material_func)()){
             if (inserted.size() < 3) return;
+            {
+                glm::vec3 N = glm::cross(inserted[1] - inserted[0], inserted[2] - inserted[1]);
+                if (N == glm::vec3(0,0,0)) {
+                    return;
+                }
+            }
             if (node == NULL){
                 node = new BSPNode(inserted, material_func);
             } else {
@@ -76,21 +80,21 @@ class BSPTree {
                 float d = glm::dot(N, node->polygon[0]);
                 
                     // 면 나누기 
-                std::vector<glm::vec3> sequence[2];
+                std::vector<glm::vec3> sequence[3];
                 int prev_state;
                 glm::vec3 prev_point;
+                int size = inserted.size();
                 {
-                    const glm::vec3 &target = inserted[0];
+                    const glm::vec3 &target = inserted[size - 1];
                     float dn = glm::dot(N, target);
-                    int state = ((dn - d) >= 0);
-                    sequence[state].push_back(target);
+                    int state = ((dn - d) == 0 ? same : ((dn - d) > 0));
                     prev_state = state;
                     prev_point = target;
                 }
-                for (int i = 1; i < inserted.size(); i++){
+                for (int i = 0; i < size; i++){
                     const glm::vec3 &target = inserted[i];
                     float dn = glm::dot(N, target);
-                    int state = ((dn - d) >= 0);
+                    int state = ((dn - d) == 0 ? same : ((dn - d) > 0));
                     // 내 각 점이 어디에 있는지 확인한다 
                     if (prev_state != state){
                     // prev 가 지금이랑 값이 다르면 
@@ -123,9 +127,9 @@ class BSPTree {
                 
                     // 면 넣기 
                 // 위에서 구한 앞면 점 시퀀스, 뒷면 점 시퀀스에 대해서 각각 
-                for (int s = 0; s < 2; s++){
+                for (int s = 0; s < 3; s++){
                     const std::vector<glm::vec3> &seq = sequence[s];
-                    BSPNode *&target_node = s ? node->front : node->back;
+                    BSPNode *&target_node = (s ? node->front : node->back);
                     int n = seq.size();
                     if (n < 3) continue;
                     // 2개 이하면 꺼져 
@@ -154,7 +158,11 @@ class BSPTree {
             }
         }
         void insert(const std::vector<glm::vec3> &polygon, void (*material_func)()){
+            
             insert(root, polygon, material_func);
+        }
+        void Draw(const glm::vec3 &camera){
+            root->Draw(camera);
         }
         void Print(const glm::vec3 &camera){
             if (root)

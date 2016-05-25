@@ -33,6 +33,29 @@ class Surface {
         Surface(SurfaceType type){
             this->spline_type = type;
         }
+        std::vector<std::vector<glm::vec3>> GetArea(){
+            std::vector<std::vector<glm::vec3>> areas_cal;
+            int length = areas.size();
+            for (int l = 0; l < length - 1; l++){
+                std::vector<glm::vec3> &former = areas[l];
+                std::vector<glm::vec3> &latter = areas[l + 1];
+                int size = former.size();
+                for (int i = 0; i < size; i++){
+                    std::vector<glm::vec3> a1;
+                    a1.push_back(former[(i) % size]);
+                    a1.push_back(latter[(i) % size]);
+                    a1.push_back(former[(i + 1) % size]);
+                    areas_cal.push_back(a1);
+                    
+                    std::vector<glm::vec3> a2;
+                    a2.push_back(latter[(i) % size]);
+                    a2.push_back(latter[(i + 1) % size]);
+                    a2.push_back(former[(i + 1) % size]);
+                    areas_cal.push_back(a2);
+                }
+            }
+            return areas_cal;
+        }
         void AddArea(std::vector<glm::vec3> &&area){
             areas.push_back(area);
         }

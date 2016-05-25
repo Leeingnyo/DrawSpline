@@ -162,4 +162,34 @@ namespace Material{
         Emerald,
         Jade
     };
+    void TranslucentRed(){
+        GLfloat amb[]={0.5,0,0,0.1f};
+        GLfloat diff[]={1,0,0,.8f};
+        GLfloat spec[]={0,0,0,1.0f};
+        GLfloat shine = 0;
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,amb);
+        glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,diff);
+        glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,spec);
+        glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shine);
+    }
+    void TranslucentWhite(){
+        GLfloat amb[]={0.1,.1,.1,0.2f};
+        GLfloat diff[]={1,1,1,.8f};
+        GLfloat spec[]={0,0,0,1.0f};
+        GLfloat shine = 0;
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,amb);
+        glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,diff);
+        glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,spec);
+        glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shine);
+    }
+    void TranslucentYellow(){
+        GLfloat amb[]={0.2,0.2,0,0.1f};
+        GLfloat diff[]={1,1,0,.8f};
+        GLfloat spec[]={0,0,0,1.0f};
+        GLfloat shine = 0;
+        glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,amb);
+        glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,diff);
+        glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,spec);
+        glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shine);
+    }
 }

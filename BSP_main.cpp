@@ -32,10 +32,10 @@ int main(int argc, char** argv) {
         c.push_back(glm::vec3(1, -1, 0));
         c.push_back(glm::vec3(1, 1, 2));
     }
-    bsp_tree.insert(d);
-    bsp_tree.insert(b);
-    bsp_tree.insert(a);
-    bsp_tree.insert(c);
+    bsp_tree.insert(b, 0);
+    bsp_tree.insert(d, 0);
+    bsp_tree.insert(a, 0);
+    bsp_tree.insert(c, 0);
     
     bsp_tree.Print(glm::vec3(0, 4, 0));
 	return 0;
